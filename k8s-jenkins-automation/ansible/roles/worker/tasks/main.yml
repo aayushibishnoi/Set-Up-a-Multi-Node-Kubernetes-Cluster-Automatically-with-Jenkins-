@@ -1,1 +1,10 @@
+- name: Copy join command to worker
+  copy:
+    src: /tmp/kubeadm_join_cmd.sh
+    dest: /tmp/kubeadm_join_cmd.sh
+    mode: '0777'
 
+- name: Join worker to cluster
+  command: bash /tmp/kubeadm_join_cmd.sh
+  args:
+    creates: /etc/kubernetes/kubelet.conf
