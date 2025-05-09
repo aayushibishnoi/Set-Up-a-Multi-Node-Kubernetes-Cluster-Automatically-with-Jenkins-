@@ -1,1 +1,34 @@
+- name: Initialize Kubernetes cluster
+  command: kubeadm init --pod-network-cidr=192.168.0.0/16
+  args:
+    creates: /etc/kubernetes/admin.conf
+  register: init_output
 
+- name: Create .kube directory
+  file:
+    path: /home/ubuntu/.kube
+    state: directory
+    owner: ubuntu
+    group: ubuntu
+    mode: '0755'
+
+- name: Copy admin.conf to user .kube
+  copy:
+    src: /etc/kubernetes/admin.conf
+    dest: /home/ubuntu/.kube/config
+    owner: ubuntu
+    group: ubuntu
+    mode: '0600'
+    remote_src: yes
+
+- name: Install Calico network
+  become_user: ubuntu
+  shell: kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
+  args:
+    executable: /bin/bash
+
+- name: Save join command
+  copy:
+    content: "{{ init_output.stdout_lines | join('\n') }}"
+    dest: /tmp/kubeadm_join_cmd.sh
+    mode: '0777'
